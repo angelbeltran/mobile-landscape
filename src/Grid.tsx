@@ -1,7 +1,11 @@
 import React from 'react';
 
 
-function Grid({ x, y }) {
+type Props = {
+  y: number;
+}
+
+function Grid({ y }: Props) {
   const lines = [];
   const numRows = 20;
   const offset = 5 * numRows;
