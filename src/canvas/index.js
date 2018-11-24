@@ -49,6 +49,8 @@ export default class Renderer {
     this.clearCanvas();
     Object.keys(this.shapes).map(k => this.shapes[k]).forEach(s => {
       s.move();
+    })
+    Object.keys(this.shapes).map(k => this.shapes[k]).forEach(s => {
       s.render();
     })
   }

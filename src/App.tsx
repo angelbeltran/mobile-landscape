@@ -95,6 +95,7 @@ function addShapes(engine: Renderer, ...shapes: Shapes.Shape[]) {
 function App() {
   const canvasRef: RefObject<HTMLCanvasElement> = useRef(null);
   const [engine, setEngine] = useState<Renderer | null>(null);
+  const [tank, setTank] = useState<Shapes.Tank | null>(null);
 
   // create rendering engine once ref is set
   useEffect(() => {
@@ -106,6 +107,13 @@ function App() {
   // start rendering engine once engine is created
   useEffect(() => {
     if (engine && !engine.running) {
+      const newTank = new Shapes.Tank({
+        x: 150,
+        y: 100,
+      });
+      setTank(newTank);
+      engine.addShapes(newTank)
+
       engine.start(100);
     }
 
@@ -118,7 +126,11 @@ function App() {
 
   return (
     <>
-      <canvas ref={canvasRef} />
+      <canvas
+        width={200}
+        height={300}
+        ref={canvasRef}
+      />
       <div>
         <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Rect())}>
           Rect
@@ -131,6 +143,90 @@ function App() {
         </button>
         <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Text())}>
           Text
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.rotate(-0.1);
+          }
+        }}>
+          Turn Left 
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.rotate(0.1);
+          }
+        }}>
+          Turn Right 
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateRelX(1);
+          }
+        }}>
+          Rel Right
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateRelX(-1);
+          }
+        }}>
+          Rel Left
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateRelY(-1);
+          }
+        }}>
+          Rel Forward
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateRelY(1);
+          }
+        }}>
+          Rel Backward
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateY(-1);
+          }
+        }}>
+          Up
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateY(1);
+          }
+        }}>
+          Down
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateX(-1);
+          }
+        }}>
+          Left
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.translateX(1);
+          }
+        }}>
+          Right
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.rotateTurret(1);
+          }
+        }}>
+          Turn Turret Right
+        </button>
+        <button disabled={!engine} onClick={() => {
+          if (engine && tank) {
+            tank.setTurretRotation(Math.PI / 4);
+          }
+        }}>
+          Set Turret Rotation
         </button>
       </div>
     </>
