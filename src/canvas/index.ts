@@ -1,14 +1,27 @@
-export * from './shapes';
+import * as Shapes from './entities';
+export * from './entities';
 
 
 export default class Renderer {
-  constructor(ctx) {
+  ctx: CanvasRenderingContext2D;
+  shapes: {
+    [key: string]: Shapes.Shape;
+  }
+  running: boolean;
+  intervalId: number | undefined;
+
+  constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
     this.shapes = {};
     this.running = false;
   }
 
-  addShapes() {
+  addShapes(...shapes: Shapes.Shape[]): void {
+    for (let shape of shapes) {
+      this.shapes[shape.id] = shape;
+      shape.ctx = this.ctx;
+    }
+    /*
     for (let i = 0; i < arguments.length; i += 1) {
       const arg = arguments[i];
 
@@ -19,6 +32,7 @@ export default class Renderer {
         arg.ctx = this.ctx;
       }
     }
+    */
   }
 
   removeShapes() {
@@ -35,7 +49,7 @@ export default class Renderer {
 
   start(dt = 1000 / 60) {
     if (!this.intervalId) {
-      this.intervalId = setInterval(() => this.render(), dt)
+      this.intervalId = window.setInterval(() => this.render(), dt)
       this.running = true;
     }
   }

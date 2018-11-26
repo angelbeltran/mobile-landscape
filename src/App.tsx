@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, RefObject } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  RefObject,
+  MouseEvent,
+} from 'react';
 import Renderer, * as Shapes from './canvas';
 
 
@@ -87,32 +93,115 @@ const random = {
 };
 
 
+const TANK_X = Shapes.windowWidth / 2;
+//const TANK_Y = 3 * Shapes.windowHeight / 4;
+const TANK_Y = Shapes.windowHeight / 2;
+
+
+function degreesToRadians(d: number): number {
+  return (Math.PI * d) / 180;
+}
+
 function addShapes(engine: Renderer, ...shapes: Shapes.Shape[]) {
-  engine.addShapes(shapes);
+  engine.addShapes(...shapes);
+}
+
+function getAngleInFrontOfTank(e: MouseEvent<HTMLCanvasElement>): number {
+  const { x, y } = offsetByTank(e);
+
+  return Math.atan2(y, x) + (Math.PI / 2);
+}
+
+function offsetByTank(e: MouseEvent<HTMLCanvasElement>): { x: number, y: number } {
+  return {
+    x: e.clientX - TANK_X,
+    y: e.clientY - TANK_Y,
+  };
 }
 
 
 function App() {
   const canvasRef: RefObject<HTMLCanvasElement> = useRef(null);
-  const [engine, setEngine] = useState<Renderer | null>(null);
-  const [tank, setTank] = useState<Shapes.Tank | null>(null);
 
   // create rendering engine once ref is set
+  const [engine, setEngine] = useState<Renderer | null>(null);
+
   useEffect(() => {
     if (!engine && canvasRef.current) {
-      setEngine(new Renderer(canvasRef.current.getContext('2d')));
+      let ctx = canvasRef.current.getContext('2d');
+
+      if (ctx) {
+        setEngine(new Renderer(ctx));
+      } else {
+        console.error('failed to create context!');
+      }
     }
   }, [canvasRef.current]);
 
-  // start rendering engine once engine is created
+  // start rendering engine and create entities/shapes
+  const [alphaText, setAlphaText] = useState<Shapes.Text | null>(null);
+  const [betaText, setBetaText] = useState<Shapes.Text | null>(null);
+  const [grid, setGrid] = useState<Shapes.Grid | null>(null);
+  const [tank, setTank] = useState<Shapes.Tank | null>(null);
+
   useEffect(() => {
     if (engine && !engine.running) {
       const newTank = new Shapes.Tank({
-        x: 150,
-        y: 100,
+        x: TANK_X,
+        y: TANK_Y,
       });
+      const alphaText = new Shapes.Text({
+        x: 15,
+        y: 15,
+        textBaseline: 'top',
+        textAlign: 'left',
+        maxWidth: Shapes.windowWidth / 2,
+        text: '',
+        font: 'verdana',
+        fontSize: 48,
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      });
+      const betaText = new Shapes.Text({
+        x: 15,
+        y: 65,
+        textBaseline: 'top',
+        textAlign: 'left',
+        maxWidth: Shapes.windowWidth / 2,
+        text: '',
+        font: 'verdana',
+        fontSize: 48,
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      });
+      const newGrid = new Shapes.Grid({
+        x: Shapes.windowWidth / 2,
+        y: Shapes.windowHeight / 2,
+        w: Shapes.windowWidth,
+        h: Shapes.windowHeight,
+        strokeStyle: 'black',
+        fillStyle: 'black',
+      });
+      const tankText = new Shapes.Text({
+        x: 15,
+        y: 115,
+        textBaseline: 'top',
+        textAlign: 'left',
+        maxWidth: Shapes.windowWidth / 2,
+        text: '',
+        font: 'verdana',
+        fontSize: 48,
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      });
+
       setTank(newTank);
-      engine.addShapes(newTank)
+      setAlphaText(alphaText);
+      setBetaText(betaText);
+      setGrid(newGrid);
+      setTankText(tankText);
+
+      engine.addShapes(newGrid, newTank, alphaText, betaText, tankText);
 
       engine.start(100);
     }
@@ -124,13 +213,103 @@ function App() {
     };
   }, [engine]);
 
+  // turn the turrent on click/point
+  function handleMouseClick(e: MouseEvent<HTMLCanvasElement>) {
+    const angle = getAngleInFrontOfTank(e);
+
+    if (tank) {
+      tank.setTurretRotation(angle);
+    }
+  }
+
+  // process the orientation of the phone/device
+  const [alpha, setAlpha] = useState<number>(0);
+  const [beta, setBeta] = useState<number>(0);
+
+  useEffect(() => {
+    function handleOrientation(e: DeviceOrientationEvent) {
+      let text = 'alpha: ';
+
+      if (e.alpha !== null && e.alpha !== alpha) {
+        setAlpha(e.alpha);
+        text += e.alpha;
+      } else {
+        text += alpha;
+      }
+
+      if (alphaText) {
+        alphaText.text = text;
+      }
+
+      text = 'beta: ';
+
+      if (e.beta !== null && e.beta !== beta) {
+        setBeta(e.beta);
+        text += e.beta;
+      } else {
+        text += beta;
+      }
+
+      if (betaText) {
+        betaText.text = text;
+      }
+    }
+
+    window.addEventListener('deviceorientation', handleOrientation, true);
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
+  }, [alphaText, betaText]);
+
+  const [tickN, tick] = useState<number>(0);
+  const [tankText, setTankText] = useState<Shapes.Text | null>(null);
+
+  // check orientation 60 times per second
+  useEffect(() => {
+    let n = tickN;
+
+    const id = setInterval(() => {
+      n += 1;
+      tick(n);
+    }, 1000 / 60);
+
+    return window.clearInterval.bind(window, id);
+  }, []);
+
+  useEffect(() => {
+    if (tank) {
+      if (beta < 30) {
+        // TODO: move tank forward / move back ground back
+        if (tankText) {
+          tankText.text = 'tank y: ' + tank.position.y;
+        }
+
+        if (grid) {
+          grid.translateY(1);
+        }
+      }
+
+      // TODO: turn tank / background from alpha
+      if (grid) {
+        grid.rotation = degreesToRadians(alpha);
+      }
+    }
+  }, [tickN]);
+
+
   return (
-    <>
-      <canvas
-        width={200}
-        height={300}
-        ref={canvasRef}
-      />
+    <canvas
+      ref={canvasRef}
+      width={Shapes.windowWidth}
+      height={Shapes.windowHeight}
+      onClick={handleMouseClick}
+    />
+  );
+}
+
+
+/*
       <div>
         <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Rect())}>
           Rect
@@ -229,9 +408,7 @@ function App() {
           Set Turret Rotation
         </button>
       </div>
-    </>
-  );
-}
+ */
 
 
 export default App;

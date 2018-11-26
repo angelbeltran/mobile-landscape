@@ -1,13 +1,15 @@
-import Shape from './shape';
-import Rect from './rect';
-import Circle from './circle';
+import Shape, { ShapeProps } from '../shapes/shape';
+import Rect from '../shapes/rect';
+import Circle from '../shapes/circle';
 
 
 /*
  * body(Rect): x, y, fillStyle, strokeStyle
  */
 export default class Tank extends Shape {
-  constructor(props) {
+  turret: Turret;
+
+  constructor(props: ShapeProps) {
     super(props);
 
     const bodySpecs = {
@@ -60,7 +62,7 @@ export default class Tank extends Shape {
 
 
 class Turret extends Shape {
-  constructor(props) {
+  constructor(props: ShapeProps) {
     super(props);
 
     const turret = new Circle({
