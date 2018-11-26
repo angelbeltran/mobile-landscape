@@ -5,7 +5,7 @@ import React, {
   RefObject,
   MouseEvent,
 } from 'react';
-import Renderer, * as Shapes from './canvas';
+import * as Canvas from './canvas';
 
 
 const words = [
@@ -40,7 +40,7 @@ const random = {
   },
 
   Rect() {
-    return new Shapes.Rect({
+    return new Canvas.Rect({
       x: 3 * random.number(),
       y: 2 * random.number(),
       h: random.number(),
@@ -53,7 +53,7 @@ const random = {
   },
 
   Text() {
-    return new Shapes.Text({
+    return new Canvas.Text({
       x: 3 * random.number(),
       y: 2 * random.number(),
       text: random.text(),
@@ -68,7 +68,7 @@ const random = {
   },
 
   Circle() {
-    return new Shapes.Circle({
+    return new Canvas.Circle({
       x: 3 * random.number(),
       y: 2 * random.number(),
       radius: random.number() / 2,
@@ -79,7 +79,7 @@ const random = {
   },
 
   Line() {
-    return new Shapes.Line({
+    return new Canvas.Line({
       x: 3 * random.number(),
       y: 2 * random.number(),
       dx: random.number(),
@@ -93,16 +93,16 @@ const random = {
 };
 
 
-const TANK_X = Shapes.windowWidth / 2;
-//const TANK_Y = 3 * Shapes.windowHeight / 4;
-const TANK_Y = Shapes.windowHeight / 2;
+const TANK_X = Canvas.windowWidth / 2;
+//const TANK_Y = 3 * Canvas.windowHeight / 4;
+const TANK_Y = Canvas.windowHeight / 2;
 
 
 function degreesToRadians(d: number): number {
   return (Math.PI * d) / 180;
 }
 
-function addShapes(engine: Renderer, ...shapes: Shapes.Shape[]) {
+function addShapes(engine: Canvas.Renderer, ...shapes: Canvas.Shape[]) {
   engine.addShapes(...shapes);
 }
 
@@ -124,14 +124,14 @@ function App() {
   const canvasRef: RefObject<HTMLCanvasElement> = useRef(null);
 
   // create rendering engine once ref is set
-  const [engine, setEngine] = useState<Renderer | null>(null);
+  const [engine, setEngine] = useState<Canvas.Renderer | null>(null);
 
   useEffect(() => {
     if (!engine && canvasRef.current) {
       let ctx = canvasRef.current.getContext('2d');
 
       if (ctx) {
-        setEngine(new Renderer(ctx));
+        setEngine(new Canvas.Renderer(ctx));
       } else {
         console.error('failed to create context!');
       }
@@ -139,55 +139,55 @@ function App() {
   }, [canvasRef.current]);
 
   // start rendering engine and create entities/shapes
-  const [alphaText, setAlphaText] = useState<Shapes.Text | null>(null);
-  const [betaText, setBetaText] = useState<Shapes.Text | null>(null);
-  const [grid, setGrid] = useState<Shapes.Grid | null>(null);
-  const [tank, setTank] = useState<Shapes.Tank | null>(null);
+  const [alphaText, setAlphaText] = useState<Canvas.Text | null>(null);
+  const [betaText, setBetaText] = useState<Canvas.Text | null>(null);
+  const [grid, setGrid] = useState<Canvas.Grid | null>(null);
+  const [tank, setTank] = useState<Canvas.Tank | null>(null);
 
   useEffect(() => {
     if (engine && !engine.running) {
-      const newTank = new Shapes.Tank({
+      const newTank = new Canvas.Tank({
         x: TANK_X,
         y: TANK_Y,
       });
-      const alphaText = new Shapes.Text({
+      const alphaText = new Canvas.Text({
         x: 15,
         y: 15,
         textBaseline: 'top',
         textAlign: 'left',
-        maxWidth: Shapes.windowWidth / 2,
+        maxWidth: Canvas.windowWidth / 2,
         text: '',
         font: 'verdana',
         fontSize: 48,
         fillStyle: 'blue',
         strokeStyle: 'black',
       });
-      const betaText = new Shapes.Text({
+      const betaText = new Canvas.Text({
         x: 15,
         y: 65,
         textBaseline: 'top',
         textAlign: 'left',
-        maxWidth: Shapes.windowWidth / 2,
+        maxWidth: Canvas.windowWidth / 2,
         text: '',
         font: 'verdana',
         fontSize: 48,
         fillStyle: 'blue',
         strokeStyle: 'black',
       });
-      const newGrid = new Shapes.Grid({
-        x: Shapes.windowWidth / 2,
-        y: Shapes.windowHeight / 2,
-        w: Shapes.windowWidth,
-        h: Shapes.windowHeight,
+      const newGrid = new Canvas.Grid({
+        x: Canvas.windowWidth / 2,
+        y: Canvas.windowHeight / 2,
+        w: Canvas.windowWidth,
+        h: Canvas.windowHeight,
         strokeStyle: 'black',
         fillStyle: 'black',
       });
-      const tankText = new Shapes.Text({
+      const tankText = new Canvas.Text({
         x: 15,
         y: 115,
         textBaseline: 'top',
         textAlign: 'left',
-        maxWidth: Shapes.windowWidth / 2,
+        maxWidth: Canvas.windowWidth / 2,
         text: '',
         font: 'verdana',
         fontSize: 48,
@@ -263,7 +263,7 @@ function App() {
   }, [alphaText, betaText]);
 
   const [tickN, tick] = useState<number>(0);
-  const [tankText, setTankText] = useState<Shapes.Text | null>(null);
+  const [tankText, setTankText] = useState<Canvas.Text | null>(null);
 
   // check orientation 60 times per second
   useEffect(() => {
@@ -301,8 +301,8 @@ function App() {
   return (
     <canvas
       ref={canvasRef}
-      width={Shapes.windowWidth}
-      height={Shapes.windowHeight}
+      width={Canvas.windowWidth}
+      height={Canvas.windowHeight}
       onClick={handleMouseClick}
     />
   );
