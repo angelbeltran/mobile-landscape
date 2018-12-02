@@ -1,3 +1,6 @@
+import { windowWidth, windowHeight } from './constants';
+
+
 export class Vector {
   x: number;
   y: number;
@@ -18,9 +21,32 @@ export class Vector {
 
 export type Transform = [number, number, number, number, number, number];
 
+export const origin = new Vector(windowWidth / 2, windowHeight / 2);
+// TODO: don't export this!
 export const stack: Transform[] = [
-  [1, 0, 0, 1, 0, 0],
+  // camera transform:
+  // translate to center of screen (origin)
+  [1, 0, 0, 1, origin.x, origin.y],
 ];
+
+export function setCameraTransform(t: Transform): void {
+  for (let i = 0; i < 6; i += 1) {
+    stack[0][i] = t[i];
+  }
+}
+export function getCameraTransform(): Transform {
+  return copyTransform(stack[0]);
+}
+
+function copyTransform(t: Transform): Transform {
+  const u: Transform = [0, 0, 0, 0, 0, 0];
+
+  for (let i = 0; i < 6; i += 1) {
+    u[i] = t[i];
+  }
+
+  return u;
+}
 
 // a * b
 export function composeTransforms(a: Transform, b: Transform): Transform {
@@ -34,9 +60,24 @@ export function composeTransforms(a: Transform, b: Transform): Transform {
   ];
 }
 
-export function computeTransform(rotation: number, { x, y }: Vector): Transform {
+export function computeTransform(rotation: number, v: Vector): Transform {
   const c = Math.cos(rotation);
   const s = Math.sin(rotation);
+  const { x, y } = v;
 
   return [ c, s, -s, c, x, y ];
+}
+
+export function oppositeTransform(rotation: number, v: Vector): Transform {
+  return composeTransforms(
+    computeTransform(0, new Vector(-v.x, -v.y)),
+    computeTransform(-rotation, new Vector()),
+  );
+}
+
+export function inverseTransform(rotation: number, v: Vector): Transform {
+  return composeTransforms(
+    computeTransform(-rotation, new Vector()),
+    computeTransform(0, new Vector(-v.x, -v.y)),
+  );
 }

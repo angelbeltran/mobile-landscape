@@ -1,219 +1,49 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  RefObject,
-  MouseEvent,
-} from 'react';
-import * as Canvas from './canvas';
+import React, { MouseEvent } from 'react';
+import Loading from './Loading';
+import { windowWidth, windowHeight } from './canvas';
+import { getAngleInFrontOfTank } from './utils';
+import useCanvasContext from './effects/canvas';
+import useEngine from './effects/engine';
+import useStart from './effects/start';
+import useAnimations from './effects/animations';
 
 
-const words = [
-  'hello',
-  'today',
-  'tomorrow',
-  'sunshine',
-  'moonshine',
-]; 
-const colors = [
-  'red',
-  'orange',
-  'yellow',
-  'green',
-  'blue',
-  'purple',
-  'black',
-  'brown',
-]
+export default function App() {
+  // create canvas context
+  const [canvasRef, ctx] = useCanvasContext();
 
-const random = {
-  number() {
-    return (100 * Math.random()) + 1;
-  },
+  const canvasEl = (
+    <canvas
+      key="canvas"
+      ref={canvasRef}
+      width={windowWidth}
+      height={windowHeight}
+      onClick={handleMouseClick}
+    />
+  );
 
-  text() {
-    return words[Math.floor(words.length * Math.random())];
-  },
+  // display loading screen until everything is loaded
+  const loadingScreen = (
+    <>
+      <Loading />
+      {canvasEl}
+    </>
+  );
 
-  color() {
-    return colors[Math.floor(colors.length * Math.random())];
-  },
-
-  Rect() {
-    return new Canvas.Rect({
-      x: 3 * random.number(),
-      y: 2 * random.number(),
-      h: random.number(),
-      w: random.number(),
-      fillStyle: random.color(),
-      strokeStyle: random.color(),
-      rotation: random.number() * Math.PI / random.number(),
-      angularVelocity: random.number() / 100,
-    })
-  },
-
-  Text() {
-    return new Canvas.Text({
-      x: 3 * random.number(),
-      y: 2 * random.number(),
-      text: random.text(),
-      font: 'arial',
-      fontSize: random.number(), // in pt
-      fillStyle: random.color(),
-      strokeStyle: random.color(),
-      rotation: random.number() * Math.PI / random.number(),
-      //moments: [Math.PI / 100],
-      angularVelocity: random.number() / 100,
-    });
-  },
-
-  Circle() {
-    return new Canvas.Circle({
-      x: 3 * random.number(),
-      y: 2 * random.number(),
-      radius: random.number() / 2,
-      fillStyle: random.color(),
-      strokeStyle: random.color(),
-      rotation: 0,
-    });
-  },
-
-  Line() {
-    return new Canvas.Line({
-      x: 3 * random.number(),
-      y: 2 * random.number(),
-      dx: random.number(),
-      dy: random.number(),
-      strokeStyle: random.color(),
-      rotation: random.number(),
-      //moments: [-Math.PI / 1000],
-      angularVelocity: random.number() / 100,
-    });
+  if (!ctx) {
+    return loadingScreen;
   }
-};
-
-
-const TANK_X = Canvas.windowWidth / 2;
-//const TANK_Y = 3 * Canvas.windowHeight / 4;
-const TANK_Y = Canvas.windowHeight / 2;
-
-
-function degreesToRadians(d: number): number {
-  return (Math.PI * d) / 180;
-}
-
-function addShapes(engine: Canvas.Renderer, ...shapes: Canvas.Shape[]) {
-  engine.addShapes(...shapes);
-}
-
-function getAngleInFrontOfTank(e: MouseEvent<HTMLCanvasElement>): number {
-  const { x, y } = offsetByTank(e);
-
-  return Math.atan2(y, x) + (Math.PI / 2);
-}
-
-function offsetByTank(e: MouseEvent<HTMLCanvasElement>): { x: number, y: number } {
-  return {
-    x: e.clientX - TANK_X,
-    y: e.clientY - TANK_Y,
-  };
-}
-
-
-function App() {
-  const canvasRef: RefObject<HTMLCanvasElement> = useRef(null);
 
   // create rendering engine once ref is set
-  const [engine, setEngine] = useState<Canvas.Renderer | null>(null);
-
-  useEffect(() => {
-    if (!engine && canvasRef.current) {
-      let ctx = canvasRef.current.getContext('2d');
-
-      if (ctx) {
-        setEngine(new Canvas.Renderer(ctx));
-      } else {
-        console.error('failed to create context!');
-      }
-    }
-  }, [canvasRef.current]);
+  const engine = useEngine(ctx);
+  if (!engine) {
+    return loadingScreen;
+  }
 
   // start rendering engine and create entities/shapes
-  const [alphaText, setAlphaText] = useState<Canvas.Text | null>(null);
-  const [betaText, setBetaText] = useState<Canvas.Text | null>(null);
-  const [grid, setGrid] = useState<Canvas.Grid | null>(null);
-  const [tank, setTank] = useState<Canvas.Tank | null>(null);
+  const [alphaText, betaText, grid, tank, tankText] = useStart(engine);
 
-  useEffect(() => {
-    if (engine && !engine.running) {
-      const newTank = new Canvas.Tank({
-        x: TANK_X,
-        y: TANK_Y,
-      });
-      const alphaText = new Canvas.Text({
-        x: 15,
-        y: 15,
-        textBaseline: 'top',
-        textAlign: 'left',
-        maxWidth: Canvas.windowWidth / 2,
-        text: '',
-        font: 'verdana',
-        fontSize: 48,
-        fillStyle: 'blue',
-        strokeStyle: 'black',
-      });
-      const betaText = new Canvas.Text({
-        x: 15,
-        y: 65,
-        textBaseline: 'top',
-        textAlign: 'left',
-        maxWidth: Canvas.windowWidth / 2,
-        text: '',
-        font: 'verdana',
-        fontSize: 48,
-        fillStyle: 'blue',
-        strokeStyle: 'black',
-      });
-      const newGrid = new Canvas.Grid({
-        x: Canvas.windowWidth / 2,
-        y: Canvas.windowHeight / 2,
-        w: Canvas.windowWidth,
-        h: Canvas.windowHeight,
-        strokeStyle: 'black',
-        fillStyle: 'black',
-      });
-      const tankText = new Canvas.Text({
-        x: 15,
-        y: 115,
-        textBaseline: 'top',
-        textAlign: 'left',
-        maxWidth: Canvas.windowWidth / 2,
-        text: '',
-        font: 'verdana',
-        fontSize: 48,
-        fillStyle: 'blue',
-        strokeStyle: 'black',
-      });
-
-      setTank(newTank);
-      setAlphaText(alphaText);
-      setBetaText(betaText);
-      setGrid(newGrid);
-      setTankText(tankText);
-
-      engine.addShapes(newGrid, newTank, alphaText, betaText, tankText);
-
-      engine.start(100);
-    }
-
-    return () => {
-      if (engine) {
-        engine.stop();
-      }
-    };
-  }, [engine]);
-
-  // turn the turrent on click/point
+  // turn the turret on click/point
   function handleMouseClick(e: MouseEvent<HTMLCanvasElement>) {
     const angle = getAngleInFrontOfTank(e);
 
@@ -222,193 +52,42 @@ function App() {
     }
   }
 
-  // process the orientation of the phone/device
-  const [alpha, setAlpha] = useState<number>(0);
-  const [beta, setBeta] = useState<number>(0);
+  if (!alphaText || !betaText || !tankText || !tank) {
+    return loadingScreen;
+  }
 
-  useEffect(() => {
-    function handleOrientation(e: DeviceOrientationEvent) {
-      let text = 'alpha: ';
+  // program the animations
+  useAnimations(engine, tank, alphaText, betaText, tankText);
 
-      if (e.alpha !== null && e.alpha !== alpha) {
-        setAlpha(e.alpha);
-        text += e.alpha;
-      } else {
-        text += alpha;
-      }
-
-      if (alphaText) {
-        alphaText.text = text;
-      }
-
-      text = 'beta: ';
-
-      if (e.beta !== null && e.beta !== beta) {
-        setBeta(e.beta);
-        text += e.beta;
-      } else {
-        text += beta;
-      }
-
-      if (betaText) {
-        betaText.text = text;
-      }
-    }
-
-    window.addEventListener('deviceorientation', handleOrientation, true);
-
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
-    };
-  }, [alphaText, betaText]);
-
-  const [tickN, tick] = useState<number>(0);
-  const [tankText, setTankText] = useState<Canvas.Text | null>(null);
-
-  // check orientation 60 times per second
-  useEffect(() => {
-    let n = tickN;
-
-    const id = setInterval(() => {
-      n += 1;
-      tick(n);
-    }, 1000 / 60);
-
-    return window.clearInterval.bind(window, id);
-  }, []);
-
-  useEffect(() => {
-    if (tank) {
-      if (beta < 30) {
-        // TODO: move tank forward / move back ground back
-        if (tankText) {
-          tankText.text = 'tank y: ' + tank.position.y;
-        }
-
-        if (grid) {
-          grid.translateY(1);
-        }
-      }
-
-      // TODO: turn tank / background from alpha
-      if (grid) {
-        grid.rotation = degreesToRadians(alpha);
-      }
-    }
-  }, [tickN]);
-
+  //return canvasEl;
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={Canvas.windowWidth}
-      height={Canvas.windowHeight}
-      onClick={handleMouseClick}
-    />
-  );
+    <>
+      {canvasEl}
+      <button onClick={() => engine.camera.rotate(- Math.PI / 8)}>
+        Turn Left
+      </button>
+      <button onClick={() => engine.camera.translateRelX(- 50)}>
+        Left
+      </button>
+      <button onClick={() => engine.camera.translateRelY(50)}>
+        Down
+      </button>
+      <button onClick={() => engine.camera.translateRelY(- 50)}>
+        Up
+      </button>
+      <button onClick={() => engine.camera.translateRelX(50)}>
+        Right
+      </button>
+      <button onClick={() => engine.camera.rotate(Math.PI / 8)}>
+        Turn Right
+      </button>
+      <button onClick={() => tank.turret.rotate(Math.PI / 8)}>
+        Turn Turret Right
+      </button>
+      <button onClick={() => tank.turret.translateRelY(- 10)}>
+        Move Turret Up 
+      </button>
+    </>
+  )
 }
-
-
-/*
-      <div>
-        <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Rect())}>
-          Rect
-        </button>
-        <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Circle())}>
-          Circle
-        </button>
-        <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Line())}>
-          Line
-        </button>
-        <button disabled={!engine} onClick={() => engine && engine.addShapes(random.Text())}>
-          Text
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.rotate(-0.1);
-          }
-        }}>
-          Turn Left 
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.rotate(0.1);
-          }
-        }}>
-          Turn Right 
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateRelX(1);
-          }
-        }}>
-          Rel Right
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateRelX(-1);
-          }
-        }}>
-          Rel Left
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateRelY(-1);
-          }
-        }}>
-          Rel Forward
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateRelY(1);
-          }
-        }}>
-          Rel Backward
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateY(-1);
-          }
-        }}>
-          Up
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateY(1);
-          }
-        }}>
-          Down
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateX(-1);
-          }
-        }}>
-          Left
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.translateX(1);
-          }
-        }}>
-          Right
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.rotateTurret(1);
-          }
-        }}>
-          Turn Turret Right
-        </button>
-        <button disabled={!engine} onClick={() => {
-          if (engine && tank) {
-            tank.setTurretRotation(Math.PI / 4);
-          }
-        }}>
-          Set Turret Rotation
-        </button>
-      </div>
- */
-
-
-export default App;

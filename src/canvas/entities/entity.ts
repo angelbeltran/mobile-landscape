@@ -22,14 +22,14 @@ export class Entity {
   protected parent?: Entity;
   transform: Transform = [1, 0, 0, 1, 0, 0];
   transformOutdated: boolean = true;
-  private _position: Vector = (new Vector());
-  private _rotation: number = 0;
+  protected _position: Vector = (new Vector());
+  protected _rotation: number = 0;
   velocity: Vector = (new Vector());
   angularVelocity: number = 0;
   forces: Vector[] = [];
   moments: number[] = [];
 
-  constructor(props: EntityProps) {
+  constructor(props: EntityProps = {}) {
     this.position.x = props.x || this.position.x;
     this.position.y = props.y || this.position.y;
     this.rotation = props.rotation || this.rotation;
@@ -57,18 +57,18 @@ export class Entity {
     return this._position;
   }
 
-  set rotation(a: number) {
+  public set rotation(a: number) {
     this._rotation = a;
     this.transformOutdated = true;
   }
 
-  get rotation(): number {
+  public get rotation(): number {
     return this._rotation;
   }
 
-  computeTransform(): Transform {
+  computeTransform(rotation: number = this.rotation, position: Vector = this.position): Transform {
     if (this.transformOutdated) {
-      this.transform = computeTransform(this.rotation, this.position);
+      this.transform = computeTransform(rotation, position);
       this.transformOutdated = false;
     }
 

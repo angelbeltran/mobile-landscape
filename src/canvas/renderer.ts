@@ -1,18 +1,18 @@
-import { Shape } from './entities';
+import { Shape, Camera, origin } from './entities';
+import { getCameraTransform } from './entities/math';
 
 
 export class Renderer {
   ctx: CanvasRenderingContext2D;
+  camera: Camera = (new Camera());
   shapes: {
     [key: string]: Shape;
-  }
-  running: boolean;
+  } = {};
+  running: boolean = false;
   intervalId: number | undefined;
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
-    this.shapes = {};
-    this.running = false;
   }
 
   addShapes(...shapes: Shape[]): void {
@@ -20,18 +20,6 @@ export class Renderer {
       this.shapes[shape.id] = shape;
       shape.ctx = this.ctx;
     }
-    /*
-    for (let i = 0; i < arguments.length; i += 1) {
-      const arg = arguments[i];
-
-      if (Array.isArray(arg)) {
-        this.addShapes.apply(this, arg);
-      } else {
-        this.shapes[arg.id] = arg;
-        arg.ctx = this.ctx;
-      }
-    }
-    */
   }
 
   removeShapes() {
@@ -69,6 +57,13 @@ export class Renderer {
   }
 
   clearCanvas() {
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    this.ctx.setTransform.apply(this.ctx, getCameraTransform());
+
+    const { x, y } = this.camera.position;
+    const w = this.ctx.canvas.width;
+    const h = this.ctx.canvas.height;
+    const d = Math.sqrt((w * w) + (h * h));
+
+    this.ctx.clearRect(x - d / 2, y - d / 2, d, d);
   }
 }

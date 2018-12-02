@@ -3,6 +3,7 @@ import {
   stack as transformStack,
   composeTransforms,
   computeTransform,
+  origin,
 } from '../math';
 import { Entity, EntityProps } from '../entity';
 import {
@@ -86,13 +87,6 @@ export default class Shape extends Entity {
       this.velocity.scale(DT)
     );
 
-    /*
-    if (!this.parent) {
-      // sub shapes only have local coordinates
-      this.checkBounds();
-    }
-    */
-
     this.shapes.forEach(s => s.move());
   }
 
@@ -109,26 +103,6 @@ export default class Shape extends Entity {
     this.angularVelocity += DT * this.moments
       .reduce((sum, moment) => sum + moment, 0)
   }
-
-  /*
-  checkBounds() {
-    if (this.position.x < 0) {
-      this.position.x = 0;
-      this.velocity.x = 0;
-    } else if (this.position.x > this.ctx.canvas.width) {
-      this.position.x = this.ctx.canvas.width;
-      this.velocity.x = 0;
-    }
-
-    if (this.position.y < 0) {
-      this.position.y = 0;
-      this.velocity.y = 0;
-    } else if (this.position.y > this.ctx.canvas.height) {
-      this.position.y = this.ctx.canvas.height;
-      this.velocity.y = 0;
-    }
-  }
-  */
 
   render() {
     if (!this.ctx) {

@@ -1,33 +1,45 @@
 import {
+  setCameraTransform,
   Vector,
-  stack as transformStack,
   Transform,
+  computeTransform,
+  inverseTransform,
+  origin,
 } from './math';
+import { Entity } from './entity';
 
 
-interface CameraProps {
-  x?: number;
-  y?: number;
-  rotation?: number;
-}
+export default class Camera extends Entity {
+  setPerspective(): void {
+    setCameraTransform(this.computeTransform());
+  }
 
-export class Camera {
-  position: Vector = (new Vector());
-  rotation: number = 0;
+  computeTransform(rotation: number = this.rotation, position: Vector = this.position): Transform {
+    if (this.transformOutdated) {
+      this.transform = inverseTransform(this.rotation, this.position);
+      this.transform[4] += origin.x;
+      this.transform[5] += origin.y;
 
-  constructor(props?: CameraProps) {
-    if (props) {
-      this.position.x = props.x || 0;
-      this.position.y = props.y || 0;
-      this.rotation = props.rotation || 0;
+      this.transformOutdated = false;
     }
+
+    return this.transform;
   }
 
-  setPerspective(t: Transform): void {
-    transformStack[0] = t;
+  translateRel(dx: number = 0, dy: number = 0): void {
+    let transform = computeTransform(this.rotation, this.position);
+
+    const x = (dx * transform[0]) + (dy * transform[2]);
+    const y = (dx * transform[1]) + (dy * transform[3]);
+
+    this.translate(x, y);
   }
 
-  rotate(da: number = 0): void {
-    this.rotation += da;
+  translateRelX(dx: number = 0): void {
+    this.translateRel(dx, 0);
+  }
+
+  translateRelY(dy: number = 0): void {
+    this.translateRel(0, dy);
   }
 }
